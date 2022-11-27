@@ -1,11 +1,11 @@
-use std::{env, process};
-use std::{error::Error, io::Bytes};
-
-use log::{error, LevelFilter};
+use log::LevelFilter;
 
 use clap::{arg, command, Parser};
-use serde::Deserialize;
+use platform_dirs::AppDirs;
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
+
+pub mod adoptium;
+pub mod mojang;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -33,38 +33,38 @@ async fn main() {
     println!("versions: {:?}", args.versions);
     println!("remapped: {:?}", args.remapped);
 
-    let manifest = match fetch_manifest().await {
-        Ok(res) => res,
-        Err(err) => {
-            error!("Failed to fetch version manifest: {}", err);
-            process::exit(1);
-        }
-    };
+    let manifests = mojang::map_version_manifests(args.versions)
+        .await
+        .unwrap_or_else(|err| {
+            panic!("Failed to fetch version manifest: {:?}", err);
+        });
 
-    for ver in args.versions {
-        if !manifest.versions.iter().any(|v| v.id == ver) {
-            error!("Invalid version {}", ver);
-            process::exit(2);
-        }
+    let packages = mojang::fetch_packages(manifests)
+        .await
+        .unwrap_or_else(|err| {
+            panic!("Failed to fetch version manifest: {:?}", err);
+        });
+
+    let java_versions: Vec<u8> = packages
+        .into_iter()
+        .map(|p| p.javaVersion)
+        .map(|v| v.majorVersion)
+        .collect();
+
+    let java_releases = adoptium::get_releases().await.unwrap_or_else(|err| {
+        panic!("Failed to fetch available Java versions: {:?}", err);
+    });
+
+    if let Some(unavail) = java_versions
+        .iter()
+        .find(|v| !java_releases.available_releases.contains(v))
+    {
+        panic!("Failed to find Java version: {:?}", unavail);
     }
-}
 
-async fn fetch_manifest() -> Result<VersionManifest, Box<dyn Error>> {
-    Ok(
-        reqwest::get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
-            .await?
-            .json::<VersionManifest>()
-            .await?,
-    )
-}
+    let app_dirs =
+        AppDirs::new(Some(env!("CARGO_PKG_NAME")), false).expect("Failed to find app dir");
+    let java_dir = app_dirs.cache_dir.join("java");
 
-#[derive(Deserialize, Debug)]
-struct VersionManifest {
-    versions: Vec<Manifest>,
-}
-
-#[derive(Deserialize, Debug)]
-struct Manifest {
-    id: String,
-    url: String,
+    adoptium::try_download_versions(java_versions, &java_dir).await;
 }

@@ -1,5 +1,5 @@
-use std::error::Error;
-use std::process;
+use std::{env, process};
+use std::{error::Error, io::Bytes};
 
 use log::{error, LevelFilter};
 
@@ -41,8 +41,11 @@ async fn main() {
         }
     };
 
-    for ele in fetch_manifest().await.unwrap().versions {
-        println!("{}", ele.id)
+    for ver in args.versions {
+        if !manifest.versions.iter().any(|v| v.id == ver) {
+            error!("Invalid version {}", ver);
+            process::exit(2);
+        }
     }
 }
 

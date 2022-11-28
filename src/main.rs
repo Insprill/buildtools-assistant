@@ -1,3 +1,9 @@
+use std::{
+    env,
+    fs::{self, File},
+    io::Write,
+};
+
 use log::LevelFilter;
 
 use clap::{arg, command, Parser};
@@ -6,6 +12,7 @@ use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 
 pub mod adoptium;
 pub mod mojang;
+pub mod spigot;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -39,7 +46,7 @@ async fn main() {
             panic!("Failed to fetch version manifest: {:?}", err);
         });
 
-    let packages = mojang::fetch_packages(manifests)
+    let packages = mojang::fetch_packages(manifests.clone())
         .await
         .unwrap_or_else(|err| {
             panic!("Failed to fetch version manifest: {:?}", err);
@@ -64,7 +71,31 @@ async fn main() {
 
     let app_dirs =
         AppDirs::new(Some(env!("CARGO_PKG_NAME")), false).expect("Failed to find app dir");
-    let java_dir = app_dirs.cache_dir.join("java");
+    let cache_dir = app_dirs.cache_dir;
+    let java_dir = cache_dir.join("java");
 
-    adoptium::try_download_versions(java_versions, &java_dir).await;
+    adoptium::try_download_versions(java_versions, &java_dir)
+        .await
+        .unwrap_or_else(|err| {
+            panic!("Failed to download Java: {:?}", err);
+        });
+
+    let buildtools_jar = spigot::download_buildtools().await.unwrap_or_else(|err| {
+        panic!("Failed to download buildtools: {:?}", err);
+    });
+
+    for manifest in manifests {
+        let bt_dir = env::temp_dir()
+            .join("buildtools")
+            .join(manifest.id.to_string());
+        fs::create_dir_all(&bt_dir).unwrap_or_else(|err| {
+            panic!("Failed to create buildtools dir: {:?}", err);
+        });
+        let mut file = File::create(bt_dir.join("buildtools.jar")).unwrap_or_else(|err| {
+            panic!("Failed to create buildtools file: {:?}", err);
+        });
+        file.write_all(&buildtools_jar).unwrap_or_else(|err| {
+            panic!("Failed to write to buildtools jar: {:?}", err);
+        });
+    }
 }

@@ -1,9 +1,11 @@
 use std::error::Error;
 
 use futures::future;
+use log::info;
 use serde::Deserialize;
 
 async fn fetch_version_manifest() -> Result<VersionManifest, reqwest::Error> {
+    info!("Fetching version manifest");
     Ok(
         reqwest::get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
             .await?
@@ -13,6 +15,7 @@ async fn fetch_version_manifest() -> Result<VersionManifest, reqwest::Error> {
 }
 
 async fn fetch_package(manifest: &Manifest) -> Result<Package, reqwest::Error> {
+    info!("Fetching package for {}", manifest.id);
     Ok(reqwest::get(&manifest.url).await?.json::<Package>().await?)
 }
 
@@ -23,7 +26,7 @@ struct VersionManifest {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Manifest {
-    id: String,
+    pub id: String,
     url: String,
 }
 

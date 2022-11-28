@@ -51,3 +51,16 @@ async fn download_binaries(version: u8, path: &PathBuf) -> Result<(), Box<dyn Er
 
     Ok(())
 }
+
+pub async fn get_java_install(version: u8, root_path: &PathBuf) -> Result<PathBuf, Box<dyn Error>> {
+    let version_path = &root_path.join(version.to_string());
+    assert!(version_path.exists());
+    let bin = version_path
+        .read_dir()?
+        .next()
+        .unwrap()?
+        .path()
+        .join("bin")
+        .join("java");
+    Ok(bin)
+}

@@ -20,7 +20,7 @@ simplelog = "0.12.0"
 sysinfo = { version = "0.26.8", default-features = false }
 tar = "0.4.38"
 tokio = { version = "1.22.0", features = ["rt-multi-thread"] }
- 
+
 [profile.release]
 strip = true
 lto = true

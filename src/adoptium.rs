@@ -1,4 +1,9 @@
-use std::{env, error::Error, fs, path::PathBuf};
+use std::{
+    env,
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use flate2::read::GzDecoder;
 use log::info;
@@ -20,10 +25,7 @@ pub struct Releases {
     pub available_releases: Vec<u8>,
 }
 
-pub async fn try_download_versions(
-    versions: Vec<u8>,
-    path: &PathBuf,
-) -> Result<(), Box<dyn Error>> {
+pub async fn try_download_versions(versions: Vec<u8>, path: &Path) -> Result<(), Box<dyn Error>> {
     for java_version in versions {
         let install_path = &path.join(java_version.to_string());
         if install_path.exists() {
@@ -36,7 +38,7 @@ pub async fn try_download_versions(
     Ok(())
 }
 
-async fn download_binaries(version: u8, path: &PathBuf) -> Result<(), Box<dyn Error>> {
+async fn download_binaries(version: u8, path: &Path) -> Result<(), Box<dyn Error>> {
     let os = env::consts::OS;
     // todo: detect arm/x86
     let res = reqwest::get(&format!(
@@ -52,8 +54,8 @@ async fn download_binaries(version: u8, path: &PathBuf) -> Result<(), Box<dyn Er
     Ok(())
 }
 
-pub async fn get_java_install(version: u8, root_path: &PathBuf) -> Result<PathBuf, Box<dyn Error>> {
-    let version_path = &root_path.join(version.to_string());
+pub async fn get_java_install(version: u8, root_path: &Path) -> Result<PathBuf, Box<dyn Error>> {
+    let version_path = root_path.join(version.to_string());
     assert!(version_path.exists());
     let bin = version_path
         .read_dir()?

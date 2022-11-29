@@ -31,14 +31,16 @@ pub struct Manifest {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Package {
-    pub javaVersion: JavaVersion,
+    pub java_version: JavaVersion,
     pub id: String,
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct JavaVersion {
-    pub majorVersion: u8,
+    pub major_version: u8,
 }
 
 pub async fn map_version_manifests(versions: Vec<String>) -> Result<Vec<Manifest>, Box<dyn Error>> {

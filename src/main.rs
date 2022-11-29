@@ -56,8 +56,8 @@ async fn main() {
 
     let java_versions: Vec<u8> = packages
         .iter()
-        .map(|p| &p.javaVersion)
-        .map(|v| v.majorVersion)
+        .map(|p| &p.java_version)
+        .map(|v| v.major_version)
         .collect();
 
     let java_releases = adoptium::get_releases().await.unwrap_or_else(|err| {
@@ -103,12 +103,12 @@ async fn main() {
         let java_dir = java_dir.clone();
         handles.push(tokio::spawn(async move {
             let install_dir =
-                adoptium::get_java_install(package.javaVersion.majorVersion, &java_dir)
+                adoptium::get_java_install(package.java_version.major_version, &java_dir)
                     .await
                     .unwrap_or_else(|err| {
                         panic!(
                             "Failed to find Java {} install: {:?}",
-                            package.javaVersion.majorVersion, err
+                            package.java_version.major_version, err
                         );
                     });
             Command::new(install_dir.to_string_lossy().to_string())

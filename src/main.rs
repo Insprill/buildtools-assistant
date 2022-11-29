@@ -2,6 +2,7 @@ use std::{
     env,
     fs::{self, File},
     io::Write,
+    path::PathBuf,
     process::{Command, Stdio},
 };
 
@@ -23,9 +24,8 @@ struct Args {
     /// What versions to run BuildTools for
     versions: Vec<String>,
 
-    /// Whether to also build the Mojang-mapped versions
-    #[arg(short, long)]
-    remapped: bool,
+    /// Where the compiled JARs should be output to
+    output: PathBuf,
 }
 
 #[tokio::main]
@@ -39,9 +39,6 @@ async fn main() {
     .unwrap();
 
     let args = Args::parse();
-
-    println!("versions: {:?}", args.versions);
-    println!("remapped: {:?}", args.remapped);
 
     let manifests = mojang::map_version_manifests(args.versions)
         .await
@@ -118,6 +115,7 @@ async fn main() {
                 .arg(&bt_file_dir.to_string_lossy().to_string())
                 .arg("--rev")
                 .arg(package.id)
+                .arg("--remapped")
                 .current_dir(&bt_dir)
                 .stdout(Stdio::inherit())
                 .output()

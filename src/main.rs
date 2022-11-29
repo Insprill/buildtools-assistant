@@ -99,7 +99,7 @@ async fn run(versions: Vec<String>, bt_mem: usize) -> Result<(), Box<dyn Error>>
 
     let java_dir = cache_dir.join("java");
 
-    adoptium::try_download_versions(java_versions, &java_dir).await?;
+    adoptium::try_download_versions(&java_releases, java_versions, &java_dir).await?;
 
     let buildtools_jar_data = spigot::download_buildtools().await?;
 

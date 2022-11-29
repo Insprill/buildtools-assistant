@@ -1,13 +1,11 @@
 use std::{
     env,
     error::Error,
-    fs,
     path::{Path, PathBuf},
 };
 
 use flate2::read::GzDecoder;
 use log::info;
-use reqwest::Response;
 use serde::Deserialize;
 use tar::Archive;
 

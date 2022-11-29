@@ -33,6 +33,7 @@ pub struct Manifest {
 #[derive(Deserialize, Debug)]
 pub struct Package {
     pub javaVersion: JavaVersion,
+    pub id: String,
 }
 
 #[derive(Deserialize, Debug)]

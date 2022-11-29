@@ -6,9 +6,10 @@
 
 
 
+
 <h1 align="center">BuildTools Assistant</h1>
 <p align="center">
-  A cross-platform CLI tool to make running Spigot's BuildTools easier.
+  A cross-platform CLI tool to easily run Spigot's BuildTools for one or more versions simultaneously, without the Java version mess.
   <br />
   <br />
   <a href="https://github.com/Insprill/buildtools-assistant/issues">Report Bugs</a>
@@ -18,16 +19,27 @@
 
 
 
+
 <!-- TABLE OF CONTENTS -->
 <details open="open">
   <summary><h2 style="display: inline-block">Table of Contents</h2></summary>
   <ol>
+    <li><a href="#about-the-project">About The Project</a></li>
     <li><a href="#usage">Usage</a></li>
     <li><a href="#compiling">Compiling</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
   </ol>
 </details>
+
+
+
+
+<!-- USAGE -->
+
+## Usage
+
+To use BuildTools Assistant, you can either build it locally, or download the [latest prebuilt binary][latest-actions-build]. You can then run it with the `--help` flag to see the proper usage.
 
 
 
@@ -76,3 +88,4 @@ Distributed under the Apache 2.0 License. See [`LICENSE`][license-url] for more 
 [issues-url]: https://github.com/Insprill/buildtools-assistant/issues
 [license-shield]: https://img.shields.io/github/license/Insprill/buildtools-assistant.svg?style=for-the-badge
 [license-url]: https://github.com/Insprill/buildtools-assistant/blob/master/LICENSE
+[latest-actions-build]: https://nightly.link/Insprill/buildtools-assistant/workflows/build/master

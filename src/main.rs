@@ -56,6 +56,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let runtime = Builder::new_multi_thread()
         .worker_threads(worker_count)
+        .enable_time()
+        .enable_io()
         .build()?;
 
     let bt_mem = args.bt_mem.unwrap_or(512);

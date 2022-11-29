@@ -2,7 +2,6 @@ use std::{
     env,
     fs::{self, File},
     io::Write,
-    path::PathBuf,
     process::{Command, Stdio},
 };
 
@@ -10,7 +9,7 @@ use futures::future;
 use itertools::Itertools;
 use log::LevelFilter;
 
-use clap::{arg, command, Parser};
+use clap::{command, Parser};
 use platform_dirs::AppDirs;
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 
@@ -23,9 +22,6 @@ pub mod spigot;
 struct Args {
     /// What versions to run BuildTools for
     versions: Vec<String>,
-
-    /// Where the compiled JARs should be output to
-    output: PathBuf,
 }
 
 #[tokio::main]
@@ -72,7 +68,9 @@ async fn main() {
 
     let app_dirs =
         AppDirs::new(Some(env!("CARGO_PKG_NAME")), false).expect("Failed to find app dir");
-    let java_dir = app_dirs.cache_dir.join("java");
+    let cache_dir = app_dirs.cache_dir;
+
+    let java_dir = cache_dir.join("java");
 
     adoptium::try_download_versions(java_versions, &java_dir)
         .await
@@ -80,9 +78,22 @@ async fn main() {
             panic!("Failed to download Java: {:?}", err);
         });
 
-    let buildtools_jar = spigot::download_buildtools().await.unwrap_or_else(|err| {
+    let buildtools_jar_data = spigot::download_buildtools().await.unwrap_or_else(|err| {
         panic!("Failed to download buildtools: {:?}", err);
     });
+
+    let bt_file_dir = cache_dir.join("buildtools.jar");
+    let mut bt_file = File::create(&bt_file_dir).unwrap_or_else(|err| {
+        panic!("Failed to create buildtools file: {:?}", err);
+    });
+    bt_file.set_len(0).unwrap_or_else(|err| {
+        panic!("Failed to remove old BuildTools jar: {:?}", err);
+    });
+    bt_file
+        .write_all(&buildtools_jar_data)
+        .unwrap_or_else(|err| {
+            panic!("Failed to write to BuildTools jar: {:?}", err);
+        });
 
     let bt_tmp_dir = env::temp_dir().join("buildtools");
 
@@ -90,16 +101,10 @@ async fn main() {
     for package in packages {
         let bt_dir = bt_tmp_dir.join(package.id.to_string());
         fs::create_dir_all(&bt_dir).unwrap_or_else(|err| {
-            panic!("Failed to create buildtools dir: {:?}", err);
-        });
-        let bt_file_dir = bt_dir.join("buildtools.jar");
-        let mut bt_file = File::create(&bt_file_dir).unwrap_or_else(|err| {
-            panic!("Failed to create buildtools file: {:?}", err);
-        });
-        bt_file.write_all(&buildtools_jar).unwrap_or_else(|err| {
-            panic!("Failed to write to buildtools jar: {:?}", err);
+            panic!("Failed to create BuildTools dir: {:?}", err);
         });
         let java_dir = java_dir.clone();
+        let bt_file_dir = bt_file_dir.clone();
         handles.push(tokio::spawn(async move {
             let install_dir =
                 adoptium::get_java_install(package.java_version.major_version, &java_dir)

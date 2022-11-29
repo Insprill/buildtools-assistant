@@ -2,11 +2,11 @@ use std::{
     env,
     fs::{self, File},
     io::Write,
-    process::Command,
+    process::{Command, Stdio},
 };
 
 use futures::future;
-use log::{logger, LevelFilter};
+use log::LevelFilter;
 
 use clap::{arg, command, Parser};
 use platform_dirs::AppDirs;
@@ -85,19 +85,19 @@ async fn main() {
         panic!("Failed to download buildtools: {:?}", err);
     });
 
+    let bt_tmp_dir = env::temp_dir().join("buildtools");
+
     let mut handles = Vec::with_capacity(packages.len());
     for package in packages {
-        let bt_dir = env::temp_dir()
-            .join("buildtools")
-            .join(package.id.to_string());
+        let bt_dir = bt_tmp_dir.join(package.id.to_string());
         fs::create_dir_all(&bt_dir).unwrap_or_else(|err| {
             panic!("Failed to create buildtools dir: {:?}", err);
         });
-        let bt_file = bt_dir.join("buildtools.jar");
-        let mut file = File::create(&bt_file).unwrap_or_else(|err| {
+        let bt_file_dir = bt_dir.join("buildtools.jar");
+        let mut bt_file = File::create(&bt_file_dir).unwrap_or_else(|err| {
             panic!("Failed to create buildtools file: {:?}", err);
         });
-        file.write_all(&buildtools_jar).unwrap_or_else(|err| {
+        bt_file.write_all(&buildtools_jar).unwrap_or_else(|err| {
             panic!("Failed to write to buildtools jar: {:?}", err);
         });
         let java_dir = java_dir.clone();
@@ -113,11 +113,14 @@ async fn main() {
                     });
             Command::new(install_dir.to_string_lossy().to_string())
                 .arg("-jar")
-                .arg(&bt_file.to_string_lossy().to_string())
+                .arg(&bt_file_dir.to_string_lossy().to_string())
                 .current_dir(&bt_dir)
-                .spawn()
+                .stdout(Stdio::inherit())
+                .output()
                 .expect("Failed to run BuildTools");
         }));
     }
     future::join_all(handles).await;
+
+    fs::remove_dir_all(bt_tmp_dir).expect("Failed to remove temp directory!");
 }

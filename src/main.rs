@@ -116,6 +116,8 @@ async fn main() {
             Command::new(install_dir.to_string_lossy().to_string())
                 .arg("-jar")
                 .arg(&bt_file_dir.to_string_lossy().to_string())
+                .arg("--rev")
+                .arg(package.id)
                 .current_dir(&bt_dir)
                 .stdout(Stdio::inherit())
                 .output()

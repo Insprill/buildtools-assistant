@@ -125,7 +125,7 @@ async fn run(versions: Vec<String>, bt_mem: usize) -> Result<(), Box<dyn Error>>
         handles.push(tokio::spawn(async move {
             info!("Running BuildTools for {}", package.id);
             Command::new(install_dir.to_string_lossy().to_string())
-                .arg(format!("-Xmx{}m", &bt_mem.to_string()))
+                .arg(format!("-Xmx{}m", bt_mem))
                 .arg("-jar")
                 .arg(&bt_file_dir.to_string_lossy().to_string())
                 .arg("--rev")

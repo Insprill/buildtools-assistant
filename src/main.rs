@@ -6,6 +6,7 @@ use std::{
 };
 
 use futures::future;
+use itertools::Itertools;
 use log::LevelFilter;
 
 use clap::{arg, command, Parser};
@@ -58,6 +59,7 @@ async fn main() {
         .iter()
         .map(|p| &p.java_version)
         .map(|v| v.major_version)
+        .unique()
         .collect();
 
     let java_releases = adoptium::get_releases().await.unwrap_or_else(|err| {

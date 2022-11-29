@@ -2,9 +2,11 @@ use std::{
     env,
     fs::{self, File},
     io::Write,
+    process::Command,
 };
 
-use log::LevelFilter;
+use futures::future;
+use log::{logger, LevelFilter};
 
 use clap::{arg, command, Parser};
 use platform_dirs::AppDirs;
@@ -53,8 +55,8 @@ async fn main() {
         });
 
     let java_versions: Vec<u8> = packages
-        .into_iter()
-        .map(|p| p.javaVersion)
+        .iter()
+        .map(|p| &p.javaVersion)
         .map(|v| v.majorVersion)
         .collect();
 
@@ -71,8 +73,7 @@ async fn main() {
 
     let app_dirs =
         AppDirs::new(Some(env!("CARGO_PKG_NAME")), false).expect("Failed to find app dir");
-    let cache_dir = app_dirs.cache_dir;
-    let java_dir = cache_dir.join("java");
+    let java_dir = app_dirs.cache_dir.join("java");
 
     adoptium::try_download_versions(java_versions, &java_dir)
         .await
@@ -84,18 +85,39 @@ async fn main() {
         panic!("Failed to download buildtools: {:?}", err);
     });
 
-    for manifest in manifests {
+    let mut handles = Vec::with_capacity(packages.len());
+    for package in packages {
         let bt_dir = env::temp_dir()
             .join("buildtools")
-            .join(manifest.id.to_string());
+            .join(package.id.to_string());
         fs::create_dir_all(&bt_dir).unwrap_or_else(|err| {
             panic!("Failed to create buildtools dir: {:?}", err);
         });
-        let mut file = File::create(bt_dir.join("buildtools.jar")).unwrap_or_else(|err| {
+        let bt_file = bt_dir.join("buildtools.jar");
+        let mut file = File::create(&bt_file).unwrap_or_else(|err| {
             panic!("Failed to create buildtools file: {:?}", err);
         });
         file.write_all(&buildtools_jar).unwrap_or_else(|err| {
             panic!("Failed to write to buildtools jar: {:?}", err);
         });
+        let java_dir = java_dir.clone();
+        handles.push(tokio::spawn(async move {
+            let install_dir =
+                adoptium::get_java_install(package.javaVersion.majorVersion, &java_dir)
+                    .await
+                    .unwrap_or_else(|err| {
+                        panic!(
+                            "Failed to find Java {} install: {:?}",
+                            package.javaVersion.majorVersion, err
+                        );
+                    });
+            Command::new(install_dir.to_string_lossy().to_string())
+                .arg("-jar")
+                .arg(&bt_file.to_string_lossy().to_string())
+                .current_dir(&bt_dir)
+                .spawn()
+                .expect("Failed to run BuildTools");
+        }));
     }
+    future::join_all(handles).await;
 }

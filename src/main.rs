@@ -8,7 +8,7 @@ use std::{
 
 use futures::future;
 use itertools::Itertools;
-use log::LevelFilter;
+use log::{info, LevelFilter};
 
 use clap::{command, Parser};
 use platform_dirs::AppDirs;
@@ -123,6 +123,7 @@ async fn run(versions: Vec<String>, bt_mem: usize) -> Result<(), Box<dyn Error>>
             adoptium::get_java_install(package.java_version.major_version, &java_dir).await?;
 
         handles.push(tokio::spawn(async move {
+            info!("Running BuildTools for {}", package.id);
             Command::new(install_dir.to_string_lossy().to_string())
                 .arg("-Xmx")
                 .arg(&bt_mem.to_string())

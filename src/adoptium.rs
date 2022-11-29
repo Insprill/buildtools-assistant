@@ -10,12 +10,10 @@ use serde::Deserialize;
 use tar::Archive;
 
 pub async fn get_releases() -> Result<Releases, reqwest::Error> {
-    Ok(
-        reqwest::get("https://api.adoptium.net/v3/info/available_releases")
-            .await?
-            .json::<Releases>()
-            .await?,
-    )
+    reqwest::get("https://api.adoptium.net/v3/info/available_releases")
+        .await?
+        .json::<Releases>()
+        .await
 }
 
 #[derive(Deserialize)]

@@ -99,7 +99,7 @@ async fn main() {
 
     let mut handles = Vec::with_capacity(packages.len());
     for package in packages {
-        let bt_dir = bt_tmp_dir.join(package.id.to_string());
+        let bt_dir = bt_tmp_dir.join(&package.id);
         fs::create_dir_all(&bt_dir).unwrap_or_else(|err| {
             panic!("Failed to create BuildTools dir: {:?}", err);
         });

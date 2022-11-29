@@ -13,6 +13,7 @@ use log::LevelFilter;
 use clap::{command, Parser};
 use platform_dirs::AppDirs;
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
+use sysinfo::{CpuRefreshKind, RefreshKind, System, SystemExt};
 use tokio::runtime::Builder;
 
 pub mod adoptium;
@@ -28,6 +29,10 @@ struct Args {
     /// How many workers are used to perform tasks. This includes downloading Java, and running BuildTools.
     #[arg(short, long)]
     workers: Option<usize>,
+
+    /// How much memory to give each BuildTools instance.
+    #[arg(short, long, default_value = "512")]
+    bt_mem: Option<usize>,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -38,23 +43,35 @@ fn main() -> Result<(), Box<dyn Error>> {
         ColorChoice::Auto,
     )])?;
 
+    let mut sys = System::new_with_specifics(
+        RefreshKind::default()
+            .with_memory()
+            .with_cpu(CpuRefreshKind::new()),
+    );
+    sys.refresh_cpu();
+    sys.refresh_memory();
+
     let args = Args::parse();
+    let worker_count = args.workers.unwrap_or(sys.cpus().len());
 
-    let mut runtime = Builder::new_multi_thread();
-    runtime.enable_time();
-    runtime.enable_io();
+    let runtime = Builder::new_multi_thread()
+        .worker_threads(worker_count)
+        .build()?;
 
-    if let Some(w) = args.workers {
-        if w > 0 {
-            runtime.worker_threads(w);
-        }
+    let bt_mem = args.bt_mem.unwrap_or(512);
+
+    if bt_mem < 512 {
+        panic!("BuildTools must have at least 512MB of memory per-instance!");
+    }
+    if ((bt_mem * worker_count) * 1_000_000) as u64 > sys.available_memory() {
+        panic!("You don't have enough memory to run {} BuildTools instances with {}MB of memory! Please lower the worker count or memory available to each instance.", worker_count, bt_mem);
     }
 
-    runtime.build()?.block_on(run(args))
+    runtime.block_on(run(args.versions, bt_mem))
 }
 
-async fn run(args: Args) -> Result<(), Box<dyn Error>> {
-    let manifests = mojang::map_version_manifests(args.versions).await?;
+async fn run(versions: Vec<String>, bt_mem: usize) -> Result<(), Box<dyn Error>> {
+    let manifests = mojang::map_version_manifests(versions).await?;
 
     let packages = mojang::fetch_packages(manifests.clone()).await?;
 
@@ -105,6 +122,8 @@ async fn run(args: Args) -> Result<(), Box<dyn Error>> {
 
         handles.push(tokio::spawn(async move {
             Command::new(install_dir.to_string_lossy().to_string())
+                .arg("-Xmx")
+                .arg(&bt_mem.to_string())
                 .arg("-jar")
                 .arg(&bt_file_dir.to_string_lossy().to_string())
                 .arg("--rev")

@@ -36,6 +36,10 @@ struct Args {
     /// How much memory to give each BuildTools instance.
     #[arg(short, long, default_value = "512")]
     bt_mem: Option<usize>,
+
+    /// Whether BuildTools' full output should be printed or not.
+    #[arg(short, long)]
+    verbose: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -72,10 +76,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         panic!("You don't have enough memory to run {} BuildTools instances with {}MB of memory! Please lower the worker count or memory available to each instance.", worker_count, bt_mem);
     }
 
-    runtime.block_on(run(args.versions, bt_mem))
+    runtime.block_on(run(args.versions, bt_mem, args.verbose))
 }
 
-async fn run(versions: Vec<String>, bt_mem: usize) -> Result<(), Box<dyn Error>> {
+async fn run(versions: Vec<String>, bt_mem: usize, verbose: bool) -> Result<(), Box<dyn Error>> {
     let manifests = mojang::map_version_manifests(&versions).await?;
 
     if let Some(invalid_ver) = spigot::versions_exist(&versions).await? {
@@ -145,7 +149,11 @@ async fn run(versions: Vec<String>, bt_mem: usize) -> Result<(), Box<dyn Error>>
                 .arg(package.id)
                 .arg("--remapped")
                 .current_dir(&bt_dir)
-                .stdout(Stdio::inherit())
+                .stdout(if verbose {
+                    Stdio::inherit()
+                } else {
+                    Stdio::null()
+                })
                 .output()
                 .expect("Failed to run BuildTools");
         }));

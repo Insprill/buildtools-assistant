@@ -63,11 +63,13 @@ async fn download_binaries(
 
     let bytes: &[u8] = &res.bytes().await?;
 
+    info!("Extracting Java {:?}", version);
     if os == OS::WINDOWS {
         zip_extract::extract(Cursor::new(bytes), path, false)?;
     } else {
         Archive::new(GzDecoder::new(bytes)).unpack(path)?;
     };
+
     Ok(())
 }
 

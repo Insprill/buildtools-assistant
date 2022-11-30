@@ -1,0 +1,17 @@
+{
+  "extends": [
+    "config:base",
+    "schedule:monthly"
+  ],
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true
+    }
+  ],
+  "automergeType": "branch",
+  "dependencyDashboard": false
+}

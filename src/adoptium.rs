@@ -30,17 +30,12 @@ pub async fn try_download_versions(
 ) -> Result<(), Box<dyn Error>> {
     for java_version in versions {
         let install_path = &path.join(java_version.to_string());
-        if install_path.exists() {
+        if install_path.exists() && install_path.read_dir()?.next().is_some() {
             info!("Found existing install for Java {:?}", java_version);
             continue;
         }
         info!("Downloading Java {:?}", java_version);
-        download_binaries(
-            releases,
-            java_version,
-            &path.join(java_version.to_string()),
-        )
-        .await?;
+        download_binaries(releases, java_version, &path.join(java_version.to_string())).await?;
     }
     Ok(())
 }

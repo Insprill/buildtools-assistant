@@ -35,7 +35,7 @@ pub async fn try_download_versions(
         }
         info!("Downloading Java {:?}", java_version);
         download_binaries(
-            &releases,
+            releases,
             java_version,
             &path.join(java_version.to_string()),
         )

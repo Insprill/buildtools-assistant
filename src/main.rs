@@ -122,6 +122,7 @@ async fn run(versions: Vec<String>, bt_mem: usize) -> Result<(), Box<dyn Error>>
         .map(char::from)
         .collect();
     let bt_tmp_dir = env::temp_dir().join(format!("{}-{}", env!("CARGO_PKG_NAME"), rand));
+    info!("Created temp directory at {}", bt_tmp_dir.to_string_lossy());
 
     let mut handles = Vec::with_capacity(packages.len());
     for package in packages {

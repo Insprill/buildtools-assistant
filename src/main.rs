@@ -29,7 +29,7 @@ struct Args {
     /// What versions to run BuildTools for
     versions: Vec<String>,
 
-    /// How many workers are used to perform tasks. This includes downloading Java, and running BuildTools.
+    /// How many BuildTools instances to run simultaneously. Defaults to 1/4 the CPU's core count.
     #[arg(short, long)]
     workers: Option<usize>,
 

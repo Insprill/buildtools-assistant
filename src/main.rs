@@ -73,7 +73,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 async fn run(versions: Vec<String>, bt_mem: usize) -> Result<(), Box<dyn Error>> {
-    let manifests = mojang::map_version_manifests(versions).await?;
+    let manifests = mojang::map_version_manifests(&versions).await?;
+
+    if let Some(invalid_ver) = spigot::versions_exist(&versions).await? {
+        panic!("BuildTools doesn't support version {}!", invalid_ver);
+    }
 
     let packages = mojang::fetch_packages(manifests.clone()).await?;
 

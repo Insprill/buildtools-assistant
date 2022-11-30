@@ -41,12 +41,14 @@ pub struct JavaVersion {
     pub major_version: u8,
 }
 
-pub async fn map_version_manifests(versions: Vec<String>) -> Result<Vec<Manifest>, Box<dyn Error>> {
+pub async fn map_version_manifests(
+    versions: &Vec<String>,
+) -> Result<Vec<Manifest>, Box<dyn Error>> {
     let mut manifests = Vec::with_capacity(versions.len());
 
     let version_manifest = fetch_version_manifest().await?;
     for version in versions {
-        let manifest = version_manifest.versions.iter().find(|v| v.id == version);
+        let manifest = version_manifest.versions.iter().find(|v| &v.id == version);
         if let Some(m) = manifest {
             manifests.push(m.clone());
         } else {

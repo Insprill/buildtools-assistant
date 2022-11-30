@@ -13,6 +13,7 @@ use log::{info, LevelFilter};
 
 use clap::{command, Parser};
 use platform_dirs::AppDirs;
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 use sysinfo::{CpuRefreshKind, RefreshKind, System, SystemExt};
 use tokio::runtime::Builder;
@@ -115,7 +116,12 @@ async fn run(versions: Vec<String>, bt_mem: usize) -> Result<(), Box<dyn Error>>
     bt_file.set_len(0)?;
     bt_file.write_all(&buildtools_jar_data)?;
 
-    let bt_tmp_dir = env::temp_dir().join("buildtools");
+    let rand: String = thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(12)
+        .map(char::from)
+        .collect();
+    let bt_tmp_dir = env::temp_dir().join(format!("{}-{}", env!("CARGO_PKG_NAME"), rand));
 
     let mut handles = Vec::with_capacity(packages.len());
     for package in packages {
@@ -149,6 +155,7 @@ async fn run(versions: Vec<String>, bt_mem: usize) -> Result<(), Box<dyn Error>>
     }
     future::join_all(handles).await;
 
+    info!("Finished running BuildTools! Removing temp directory.");
     fs::remove_dir_all(bt_tmp_dir)?;
 
     Ok(())

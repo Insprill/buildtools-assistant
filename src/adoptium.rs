@@ -1,5 +1,4 @@
 use std::{
-    env,
     error::Error,
     io::Cursor,
     path::{Path, PathBuf},
@@ -9,6 +8,8 @@ use flate2::read::GzDecoder;
 use log::info;
 use serde::Deserialize;
 use tar::Archive;
+
+use crate::os::OS;
 
 pub async fn get_releases() -> Result<Releases, reqwest::Error> {
     reqwest::get("https://api.adoptium.net/v3/info/available_releases")
@@ -45,7 +46,7 @@ async fn download_binaries(
     version: u8,
     path: &Path,
 ) -> Result<(), Box<dyn Error>> {
-    let os = env::consts::OS;
+    let os = OS::current();
     let image_type = if releases.available_lts_releases.contains(&version) {
         "jre"
     } else {
@@ -54,13 +55,15 @@ async fn download_binaries(
     // todo: detect arm/x86
     let res = reqwest::get(&format!(
         "https://api.adoptium.net/v3/binary/latest/{}/ga/{}/x64/{}/hotspot/normal/eclipse",
-        version, os, image_type
+        version,
+        os.adoptium_name(),
+        image_type
     ))
     .await?;
 
     let bytes: &[u8] = &res.bytes().await?;
 
-    if os == "windows" {
+    if os == OS::WINDOWS {
         zip_extract::extract(Cursor::new(bytes), path, false)?;
     } else {
         Archive::new(GzDecoder::new(bytes)).unpack(path)?;
@@ -71,16 +74,5 @@ async fn download_binaries(
 pub async fn get_java_install(version: u8, root_path: &Path) -> Result<PathBuf, Box<dyn Error>> {
     let version_path = root_path.join(version.to_string());
     assert!(version_path.exists());
-    let bin = version_path
-        .read_dir()?
-        .next()
-        .unwrap()?
-        .path()
-        .join("bin")
-        .join(if env::consts::OS == "windows" {
-            "java.exe"
-        } else {
-            "java"
-        });
-    Ok(bin)
+    Ok(OS::current().java_dir(&version_path.read_dir()?.next().unwrap()?.path()))
 }

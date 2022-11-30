@@ -18,6 +18,7 @@ use tokio::runtime::Builder;
 
 pub mod adoptium;
 pub mod mojang;
+pub mod os;
 pub mod spigot;
 
 #[derive(Parser, Debug)]

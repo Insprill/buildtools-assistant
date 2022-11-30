@@ -1,6 +1,7 @@
 use std::{
     env,
     error::Error,
+    io::Cursor,
     path::{Path, PathBuf},
 };
 
@@ -63,9 +64,12 @@ async fn download_binaries(
     .await?;
 
     let bytes: &[u8] = &res.bytes().await?;
-    let mut archive = Archive::new(GzDecoder::new(bytes));
-    archive.unpack(path)?;
 
+    if os == "windows" {
+        zip_extract::extract(Cursor::new(bytes), path, false)?;
+    } else {
+        Archive::new(GzDecoder::new(bytes)).unpack(path)?;
+    };
     Ok(())
 }
 
@@ -78,6 +82,10 @@ pub async fn get_java_install(version: u8, root_path: &Path) -> Result<PathBuf, 
         .unwrap()?
         .path()
         .join("bin")
-        .join("java");
+        .join(if env::consts::OS == "windows" {
+            "java.exe"
+        } else {
+            "java"
+        });
     Ok(bin)
 }

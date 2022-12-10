@@ -4,6 +4,7 @@ use std::{
     error::Error,
     fs::{self, File},
     io::Write,
+    path::PathBuf,
     process::{Command, Stdio},
 };
 
@@ -40,6 +41,10 @@ struct Args {
     /// Whether BuildTools' full output should be printed or not.
     #[arg(short, long)]
     verbose: bool,
+
+    /// The path where the built Spigot/CraftBukkit jars will be placed.
+    #[arg(short, long)]
+    output_dir: Option<PathBuf>,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -76,10 +81,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         panic!("You don't have enough memory to run {} BuildTools instances with {}MB of memory! Please lower the worker count or memory available to each instance.", worker_count, bt_mem);
     }
 
-    runtime.block_on(run(args.versions, bt_mem, args.verbose))
+    runtime.block_on(run(args.versions, bt_mem, args.output_dir, args.verbose))
 }
 
-async fn run(versions: Vec<String>, bt_mem: usize, verbose: bool) -> Result<(), Box<dyn Error>> {
+async fn run(
+    versions: Vec<String>,
+    bt_mem: usize,
+    output_dir: Option<PathBuf>,
+    verbose: bool,
+) -> Result<(), Box<dyn Error>> {
     let manifests = mojang::map_version_manifests(&versions).await?;
 
     if let Some(invalid_ver) = spigot::versions_exist(&versions).await? {
@@ -135,6 +145,7 @@ async fn run(versions: Vec<String>, bt_mem: usize, verbose: bool) -> Result<(), 
 
         let java_dir = java_dir.clone();
         let bt_file_dir = bt_file_dir.clone();
+        let output_dir = output_dir.as_ref().unwrap_or(&bt_dir).clone();
 
         let install_dir =
             adoptium::get_java_install(package.java_version.major_version, &java_dir).await?;
@@ -147,6 +158,8 @@ async fn run(versions: Vec<String>, bt_mem: usize, verbose: bool) -> Result<(), 
                 .arg(&bt_file_dir.to_string_lossy().to_string())
                 .arg("--rev")
                 .arg(package.id)
+                .arg("--output-dir")
+                .arg(output_dir.to_string_lossy().to_string())
                 .arg("--remapped")
                 .current_dir(&bt_dir)
                 .stdout(if verbose {

@@ -33,7 +33,7 @@ struct Args {
     #[arg(short, long)]
     workers: Option<usize>,
 
-    /// How much memory to give each BuildTools instance.
+    /// How much memory to give each BuildTools instance, in MB.
     #[arg(short, long, default_value = "512")]
     bt_mem: Option<usize>,
 

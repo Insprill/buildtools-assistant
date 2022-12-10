@@ -34,15 +34,15 @@ struct Args {
     #[arg(short, long)]
     workers: Option<usize>,
 
-    /// How much memory to give each BuildTools instance, in MB.
+    /// How much memory to give each BuildTools instance, in MB
     #[arg(short, long, default_value = "512")]
     bt_mem: Option<usize>,
 
-    /// Whether BuildTools' full output should be printed or not.
+    /// Whether BuildTools' full output should be printed or not
     #[arg(short, long)]
     verbose: bool,
 
-    /// The path where the built Spigot/CraftBukkit jars will be placed.
+    /// The path where the built Spigot/CraftBukkit jars will be placed
     #[arg(short, long)]
     output_dir: Option<PathBuf>,
 }

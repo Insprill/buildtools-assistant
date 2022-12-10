@@ -1,5 +1,6 @@
 use std::{
     error::Error,
+    fs,
     io::Cursor,
     path::{Path, PathBuf},
 };
@@ -62,6 +63,8 @@ async fn download_binaries(
     .await?;
 
     let bytes: &[u8] = &res.bytes().await?;
+
+    fs::create_dir_all(path)?;
 
     info!("Extracting Java {:?}", version);
     if os == OS::WINDOWS {

@@ -182,9 +182,9 @@ async fn run(
 }
 
 fn stdio(verbose: bool) -> Stdio {
-    return if verbose {
+    if verbose {
         Stdio::inherit()
     } else {
         Stdio::null()
-    };
+    }
 }

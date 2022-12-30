@@ -162,11 +162,8 @@ async fn run(
                 .arg(output_dir.to_string_lossy().to_string())
                 .arg("--remapped")
                 .current_dir(&bt_dir)
-                .stdout(if verbose {
-                    Stdio::inherit()
-                } else {
-                    Stdio::null()
-                })
+                .stderr(stdio(verbose))
+                .stdout(stdio(verbose))
                 .output()
                 .expect("Failed to run BuildTools");
             info!("Finished running BuildTools for {}", &package.id);
@@ -182,4 +179,12 @@ async fn run(
     info!("Done!");
 
     Ok(())
+}
+
+fn stdio(verbose: bool) -> Stdio {
+    return if verbose {
+        Stdio::inherit()
+    } else {
+        Stdio::null()
+    };
 }

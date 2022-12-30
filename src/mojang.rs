@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use futures::future;
+use itertools::Itertools;
 use log::info;
 use serde::Deserialize;
 
@@ -47,7 +48,7 @@ pub async fn map_version_manifests(
     let mut manifests = Vec::with_capacity(versions.len());
 
     let version_manifest = fetch_version_manifest().await?;
-    for version in versions {
+    for version in versions.iter().unique() {
         let manifest = version_manifest.versions.iter().find(|v| &v.id == version);
         if let Some(m) = manifest {
             manifests.push(m.clone());

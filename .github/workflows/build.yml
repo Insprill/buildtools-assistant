@@ -55,5 +55,10 @@ jobs:
         with:
           components: clippy
 
+      - name: Setup Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: Linux
+
       - name: Check Code Style
         run: cargo clippy -- -D warnings

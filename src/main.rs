@@ -162,6 +162,7 @@ async fn run(
                 .arg(output_dir.to_string_lossy().to_string())
                 .arg("--remapped")
                 .current_dir(&bt_dir)
+                .stderr(Stdio::inherit())
                 .stdout(if verbose {
                     Stdio::inherit()
                 } else {

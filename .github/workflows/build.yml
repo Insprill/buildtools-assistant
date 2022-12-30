@@ -35,9 +35,6 @@ jobs:
         with:
           key: ${{ matrix.name }}
 
-      - name: Check Code Style
-        run: cargo clippy -- -D warnings
-
       - name: Build
         run: cargo build --release
 
@@ -46,3 +43,17 @@ jobs:
         with:
           name: BuildTools-Assistant-${{ matrix.name }}
           path: target/release/buildtools-assistant${{ matrix.suffix }}
+
+  code-style:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Check Code Style
+        run: cargo clippy -- -D warnings

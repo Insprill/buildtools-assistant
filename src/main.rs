@@ -151,13 +151,13 @@ async fn run(
             adoptium::get_java_install(package.java_version.major_version, &java_dir).await?;
 
         handles.push(tokio::spawn(async move {
-            info!("Running BuildTools for {}", package.id);
+            info!("Running BuildTools for {}", &package.id);
             Command::new(install_dir.to_string_lossy().to_string())
                 .arg(format!("-Xmx{}m", bt_mem))
                 .arg("-jar")
                 .arg(&bt_file_dir.to_string_lossy().to_string())
                 .arg("--rev")
-                .arg(package.id)
+                .arg(&package.id)
                 .arg("--output-dir")
                 .arg(output_dir.to_string_lossy().to_string())
                 .arg("--remapped")
@@ -170,12 +170,17 @@ async fn run(
                 })
                 .output()
                 .expect("Failed to run BuildTools");
+            info!("Finished running BuildTools for {}", &package.id);
+            // Will get removed later, doesn't matter if it fails.
+            fs::remove_dir_all(bt_dir).unwrap_or(());
+            info!("Cleaned up temp direcotry for {}", &package.id);
         }));
     }
     future::join_all(handles).await;
 
-    info!("Finished running BuildTools! Removing temp directory.");
+    info!("Cleaning up base temp directory");
     fs::remove_dir_all(bt_tmp_dir)?;
+    info!("Done!");
 
     Ok(())
 }

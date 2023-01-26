@@ -8,6 +8,7 @@ use std::{
 use flate2::read::GzDecoder;
 use log::info;
 use serde::Deserialize;
+use std::env::consts::ARCH;
 use tar::Archive;
 
 use crate::os::OS;
@@ -55,11 +56,8 @@ async fn download_binaries(
     };
 
     let res = reqwest::get(&format!(
-        "https://api.adoptium.net/v3/binary/latest/{}/ga/{}/{}/{}/hotspot/normal/eclipse",
-        version,
-        os.adoptium_name(),
-        std::env::consts::ARCH,
-        image_type
+        "https://api.adoptium.net/v3/binary/latest/{version}/ga/{}/{ARCH}/{image_type}/hotspot/normal/eclipse",
+        os.adoptium_name()
     ))
     .await?
     .error_for_status()?;
@@ -68,7 +66,7 @@ async fn download_binaries(
 
     fs::create_dir_all(path)?;
 
-    info!("Extracting Java {:?}", version);
+    info!("Extracting Java {version:?}");
     if os == OS::WINDOWS {
         zip_extract::extract(Cursor::new(bytes), path, false)?;
     } else {

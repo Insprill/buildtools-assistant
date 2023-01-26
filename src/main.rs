@@ -78,7 +78,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         panic!("BuildTools must have at least 512MB of memory per-instance!");
     }
     if ((bt_mem * worker_count) * 1_000_000) as u64 > sys.available_memory() {
-        panic!("You don't have enough memory to run {} BuildTools instances with {}MB of memory! Please lower the worker count or memory available to each instance.", worker_count, bt_mem);
+        panic!("You don't have enough memory to run {worker_count} BuildTools instances with {bt_mem}MB of memory! Please lower the worker count or memory available to each instance.");
     }
 
     runtime.block_on(run(args.versions, bt_mem, args.output_dir, args.verbose))
@@ -93,7 +93,7 @@ async fn run(
     let manifests = mojang::map_version_manifests(&versions).await?;
 
     if let Some(invalid_ver) = spigot::versions_exist(&versions).await? {
-        panic!("BuildTools doesn't support version {}!", invalid_ver);
+        panic!("BuildTools doesn't support version {invalid_ver}!");
     }
 
     let packages = mojang::fetch_packages(manifests.clone()).await?;
@@ -111,7 +111,7 @@ async fn run(
         .iter()
         .find(|v| !java_releases.available_releases.contains(v))
     {
-        panic!("Failed to find Java version: {:?}", unavail);
+        panic!("Failed to find Java version: {unavail:?}");
     }
 
     let app_dirs =
@@ -153,7 +153,7 @@ async fn run(
         handles.push(tokio::spawn(async move {
             info!("Running BuildTools for {}", &package.id);
             Command::new(install_dir.to_string_lossy().to_string())
-                .arg(format!("-Xmx{}m", bt_mem))
+                .arg(format!("-Xmx{bt_mem}m"))
                 .arg("-jar")
                 .arg(&bt_file_dir.to_string_lossy().to_string())
                 .arg("--rev")

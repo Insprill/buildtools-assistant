@@ -53,7 +53,7 @@ pub async fn map_version_manifests(
         if let Some(m) = manifest {
             manifests.push(m.clone());
         } else {
-            panic!("Invalid version {:?}", version);
+            panic!("Invalid version {version:?}");
         }
     }
     Ok(manifests)

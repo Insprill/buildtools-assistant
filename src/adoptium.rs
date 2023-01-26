@@ -53,14 +53,16 @@ async fn download_binaries(
     } else {
         "jdk"
     };
-    // todo: detect arm/x86
+
     let res = reqwest::get(&format!(
-        "https://api.adoptium.net/v3/binary/latest/{}/ga/{}/x64/{}/hotspot/normal/eclipse",
+        "https://api.adoptium.net/v3/binary/latest/{}/ga/{}/{}/{}/hotspot/normal/eclipse",
         version,
         os.adoptium_name(),
+        std::env::consts::ARCH,
         image_type
     ))
-    .await?;
+    .await?
+    .error_for_status()?;
 
     let bytes: &[u8] = &res.bytes().await?;
 

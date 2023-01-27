@@ -53,7 +53,7 @@ To use BuildTools Assistant, you can either build it locally, or download the [l
 
 ## Compiling
 
-To compile BuildTools Assistant, you need [Rust](https://www.rust-lang.org/tools/install).  
+To compile BuildTools Assistant, you'll need [Rust](https://www.rust-lang.org/tools/install) 1.67 or newer.  
 Clone this repo, then run `cargo build --release` from your terminal.  
 You can find the compiled program in the `target/release` directory.  
 

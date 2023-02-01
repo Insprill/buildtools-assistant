@@ -13,7 +13,7 @@ rust-version = "1.67"
 [dependencies]
 clap = { version = "4.1.4", features = ["derive"] }
 flate2 = "1.0.25"
-futures = "0.3.25"
+futures = "0.3.26"
 itertools = "0.10.5"
 log = "0.4.17"
 platform-dirs = "0.3.0"

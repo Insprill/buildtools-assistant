@@ -80,6 +80,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     if ((bt_mem * worker_count) * 1_000_000) as u64 > sys.available_memory() {
         panic!("You don't have enough memory to run {worker_count} BuildTools instances with {bt_mem}MB of memory! Please lower the worker count or memory available to each instance.");
     }
+    if args.versions.is_empty() {
+        panic!("You must specify at least one version to build!");
+    }
 
     runtime.block_on(run(args.versions, bt_mem, args.output_dir, args.verbose))
 }

@@ -1,5 +1,5 @@
 use std::{
-    cmp::{max, self, min},
+    cmp::{max, min},
     env,
     error::Error,
     fs::{self, File},

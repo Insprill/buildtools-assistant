@@ -165,6 +165,7 @@ async fn run(
                 .arg(output_dir.to_string_lossy().to_string())
                 .arg("--remapped")
                 .current_dir(&bt_dir)
+                .env("SHELL", "bash")
                 .stderr(stdio(verbose))
                 .stdout(stdio(verbose))
                 .output()

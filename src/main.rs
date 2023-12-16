@@ -1,5 +1,5 @@
 use std::{
-    cmp::max,
+    cmp::{max, self, min},
     env,
     error::Error,
     fs::{self, File},
@@ -64,7 +64,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     sys.refresh_memory();
 
     let args = Args::parse();
-    let worker_count = args.workers.unwrap_or_else(|| max(1, sys.cpus().len() / 4));
+    let worker_count = min(args.workers.unwrap_or_else(|| max(1, sys.cpus().len() / 4)), args.versions.len());
 
     let runtime = Builder::new_multi_thread()
         .worker_threads(worker_count)

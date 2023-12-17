@@ -1,10 +1,10 @@
 use std::{
-    error::Error,
     fs,
     io::Cursor,
     path::{Path, PathBuf},
 };
 
+use anyhow::Result;
 use flate2::read::GzDecoder;
 use log::info;
 use serde::Deserialize;
@@ -30,7 +30,7 @@ pub async fn try_download_versions(
     releases: &Releases,
     versions: Vec<u8>,
     path: &Path,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     for java_version in versions {
         let install_path = &path.join(java_version.to_string());
         if install_path.exists() && install_path.read_dir()?.next().is_some() {
@@ -43,12 +43,8 @@ pub async fn try_download_versions(
     Ok(())
 }
 
-async fn download_binaries(
-    releases: &Releases,
-    version: u8,
-    path: &Path,
-) -> Result<(), Box<dyn Error>> {
-    let os = OS::current();
+async fn download_binaries(releases: &Releases, version: u8, path: &Path) -> Result<()> {
+    let os = OS::current()?;
     let image_type = if releases.available_lts_releases.contains(&version) {
         "jre"
     } else {
@@ -76,8 +72,8 @@ async fn download_binaries(
     Ok(())
 }
 
-pub async fn get_java_install(version: u8, root_path: &Path) -> Result<PathBuf, Box<dyn Error>> {
+pub async fn get_java_install(version: u8, root_path: &Path) -> Result<PathBuf> {
     let version_path = root_path.join(version.to_string());
     assert!(version_path.exists());
-    Ok(OS::current().java_dir(&version_path.read_dir()?.next().unwrap()?.path()))
+    Ok(OS::current()?.java_dir(&version_path.read_dir()?.next().unwrap()?.path()))
 }

@@ -1,13 +1,13 @@
 use std::{
     cmp::{max, min},
     env,
-    error::Error,
     fs::{self, File},
     io::Write,
     path::PathBuf,
     process::{Command, Stdio},
 };
 
+use anyhow::{bail, Result};
 use futures::future;
 use itertools::Itertools;
 use log::{info, LevelFilter};
@@ -47,7 +47,7 @@ struct Args {
     output_dir: Option<PathBuf>,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
     CombinedLogger::init(vec![TermLogger::new(
         LevelFilter::Info,
         Config::default(),
@@ -64,7 +64,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     sys.refresh_memory();
 
     let args = Args::parse();
-    let worker_count = min(args.workers.unwrap_or_else(|| max(1, sys.cpus().len() / 4)), args.versions.len());
+    let worker_count = min(
+        args.workers.unwrap_or_else(|| max(1, sys.cpus().len() / 4)),
+        args.versions.len(),
+    );
 
     let runtime = Builder::new_multi_thread()
         .worker_threads(worker_count)
@@ -75,13 +78,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let bt_mem = args.bt_mem.unwrap_or(512);
 
     if bt_mem < 512 {
-        panic!("BuildTools must have at least 512MB of memory per-instance!");
+        bail!("BuildTools must have at least 512MB of memory per-instance!");
     }
     if ((bt_mem * worker_count) * 1_000_000) as u64 > sys.available_memory() {
-        panic!("You don't have enough memory to run {worker_count} BuildTools instances with {bt_mem}MB of memory! Please lower the worker count or memory available to each instance.");
+        bail!("You don't have enough memory to run {worker_count} BuildTools instances with {bt_mem}MB of memory! Please lower the worker count or memory available to each instance.");
     }
     if args.versions.is_empty() {
-        panic!("You must specify at least one version to build!");
+        bail!("You must specify at least one version to build!");
     }
 
     runtime.block_on(run(args.versions, bt_mem, args.output_dir, args.verbose))
@@ -92,11 +95,11 @@ async fn run(
     bt_mem: usize,
     output_dir: Option<PathBuf>,
     verbose: bool,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     let manifests = mojang::map_version_manifests(&versions).await?;
 
     if let Some(invalid_ver) = spigot::versions_exist(&versions).await? {
-        panic!("BuildTools doesn't support version {invalid_ver}!");
+        bail!("BuildTools doesn't support version {invalid_ver}!");
     }
 
     let packages = mojang::fetch_packages(manifests.clone()).await?;
@@ -114,7 +117,7 @@ async fn run(
         .iter()
         .find(|v| !java_releases.available_releases.contains(v))
     {
-        panic!("Failed to find Java version: {unavail:?}");
+        bail!("Failed to find Java version: {unavail:?}");
     }
 
     let app_dirs =

@@ -1,5 +1,4 @@
-use std::error::Error;
-
+use anyhow::{bail, Result};
 use futures::future;
 use itertools::Itertools;
 use log::info;
@@ -42,9 +41,7 @@ pub struct JavaVersion {
     pub major_version: u8,
 }
 
-pub async fn map_version_manifests(
-    versions: &Vec<String>,
-) -> Result<Vec<Manifest>, Box<dyn Error>> {
+pub async fn map_version_manifests(versions: &Vec<String>) -> Result<Vec<Manifest>> {
     let mut manifests = Vec::with_capacity(versions.len());
 
     let version_manifest = fetch_version_manifest().await?;
@@ -53,13 +50,13 @@ pub async fn map_version_manifests(
         if let Some(m) = manifest {
             manifests.push(m.clone());
         } else {
-            panic!("Invalid version {version:?}");
+            bail!("Invalid version {version:?}");
         }
     }
     Ok(manifests)
 }
 
-pub async fn fetch_packages(manifests: Vec<Manifest>) -> Result<Vec<Package>, Box<dyn Error>> {
+pub async fn fetch_packages(manifests: Vec<Manifest>) -> Result<Vec<Package>> {
     let mut package_handles = Vec::with_capacity(manifests.len());
     for manifest in manifests {
         package_handles.push(tokio::spawn(async move { fetch_package(&manifest).await }));

@@ -3,6 +3,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use anyhow::bail;
+use anyhow::Result;
+
 #[derive(PartialEq, Eq)]
 pub enum OS {
     LINUX,
@@ -11,12 +14,14 @@ pub enum OS {
 }
 
 impl OS {
-    pub fn current() -> OS {
+    pub fn current() -> Result<OS> {
         match env::consts::OS {
-            "windows" => OS::WINDOWS,
-            "linux" => OS::LINUX,
-            "macos" => OS::MACOS,
-            _ => panic!("unsupported os"),
+            "windows" => Ok(OS::WINDOWS),
+            "linux" => Ok(OS::LINUX),
+            "macos" => Ok(OS::MACOS),
+            _ => {
+                bail!("unsupported os")
+            }
         }
     }
 

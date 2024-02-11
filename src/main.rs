@@ -87,18 +87,18 @@ fn main() -> Result<()> {
         bail!("You must specify at least one version to build!");
     }
 
-    runtime.block_on(run(args.versions, bt_mem, args.output_dir, args.verbose))
+    runtime.block_on(run(&args.versions, bt_mem, args.output_dir, args.verbose))
 }
 
 async fn run(
-    versions: Vec<String>,
+    versions: &[String],
     bt_mem: usize,
     output_dir: Option<PathBuf>,
     verbose: bool,
 ) -> Result<()> {
-    let manifests = mojang::map_version_manifests(&versions).await?;
+    let manifests = mojang::map_version_manifests(versions).await?;
 
-    if let Some(invalid_ver) = spigot::versions_exist(&versions).await? {
+    if let Some(invalid_ver) = spigot::versions_exist(versions).await? {
         bail!("BuildTools doesn't support version {invalid_ver}!");
     }
 

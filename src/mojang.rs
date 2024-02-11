@@ -41,7 +41,7 @@ pub struct JavaVersion {
     pub major_version: u8,
 }
 
-pub async fn map_version_manifests(versions: &Vec<String>) -> Result<Vec<Manifest>> {
+pub async fn map_version_manifests(versions: &[String]) -> Result<Vec<Manifest>> {
     let mut manifests = Vec::with_capacity(versions.len());
 
     let version_manifest = fetch_version_manifest().await?;

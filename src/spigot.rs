@@ -1,7 +1,7 @@
 use log::info;
 use reqwest::{self, Client};
 
-pub async fn versions_exist(versions: &Vec<String>) -> Result<Option<&str>, reqwest::Error> {
+pub async fn versions_exist(versions: &[String]) -> Result<Option<&str>, reqwest::Error> {
     info!("Fetching supported versions");
     let res = Client::new()
         .get("https://hub.spigotmc.org/versions")

@@ -42,8 +42,8 @@
 To use BuildTools Assistant, you can either build it locally, or download the [latest prebuilt binary][latest-actions-build]. You can then run it with the `--help` flag to see the proper usage.
 
 <details>
-  <summary>Example for all versions between 1.8 and 1.19.4</summary>
-  <code>./buildtools-assistant 1.19.4 1.19.3 1.19.2 1.19.1 1.19 1.18.2 1.18.1 1.18 1.17.1 1.17 1.16.5 1.16.4 1.16.3 1.16.2 1.16.1 1.16 1.15.2 1.15.1 1.15 1.14.4 1.14.3 1.14.2 1.14.1 1.14 1.13.2 1.13.1 1.13 1.12.2 1.12.1 1.12 1.11.2 1.11.1 1.11 1.10.2 1.10 1.9.4 1.9.2 1.9.2 1.9 1.8.8 1.8.7 1.8.6 1.8.5 1.8.4 1.8.3 1.8</code>
+  <summary>Example for all versions between 1.8 and 1.20.5</summary>
+  <code>./buildtools-assistant 1.20.5 1.20.4 1.20.3 1.20.2 1.20.1 1.20 1.19.4 1.19.3 1.19.2 1.19.1 1.19 1.18.2 1.18.1 1.18 1.17.1 1.17 1.16.5 1.16.4 1.16.3 1.16.2 1.16.1 1.16 1.15.2 1.15.1 1.15 1.14.4 1.14.3 1.14.2 1.14.1 1.14 1.13.2 1.13.1 1.13 1.12.2 1.12.1 1.12 1.11.2 1.11.1 1.11 1.10.2 1.10 1.9.4 1.9.2 1.9.2 1.9 1.8.8 1.8.7 1.8.6 1.8.5 1.8.4 1.8.3 1.8</code>
 </details
 
 

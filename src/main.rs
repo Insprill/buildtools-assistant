@@ -16,7 +16,7 @@ use clap::{command, Parser};
 use platform_dirs::AppDirs;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
-use sysinfo::{CpuRefreshKind, RefreshKind, System, SystemExt};
+use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
 use tokio::runtime::Builder;
 
 pub mod adoptium;
@@ -57,7 +57,7 @@ fn main() -> Result<()> {
 
     let mut sys = System::new_with_specifics(
         RefreshKind::default()
-            .with_memory()
+            .with_memory(MemoryRefreshKind::new().with_ram())
             .with_cpu(CpuRefreshKind::new()),
     );
     sys.refresh_cpu();

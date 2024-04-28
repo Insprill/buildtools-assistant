@@ -8,9 +8,11 @@ use std::{
 };
 
 use anyhow::{bail, Result};
+use std::process::ExitCode;
+
 use futures::future;
 use itertools::Itertools;
-use log::{info, LevelFilter};
+use log::{error, info, LevelFilter};
 
 use clap::{command, Parser};
 use platform_dirs::AppDirs;
@@ -47,7 +49,20 @@ struct Args {
     output_dir: Option<PathBuf>,
 }
 
-fn main() -> Result<()> {
+fn main() -> ExitCode {
+    match start() {
+        Ok(_) => {
+            info!("Done!");
+            ExitCode::SUCCESS
+        }
+        Err(err) => {
+            error!("{}", err);
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn start() -> Result<()> {
     CombinedLogger::init(vec![TermLogger::new(
         LevelFilter::Info,
         Config::default(),
@@ -158,7 +173,7 @@ async fn run(
 
         handles.push(tokio::spawn(async move {
             info!("Running BuildTools for {}", &package.id);
-            Command::new(install_dir.to_string_lossy().to_string())
+            let res = Command::new(install_dir.to_string_lossy().to_string())
                 .arg(format!("-Xmx{bt_mem}m"))
                 .arg("-jar")
                 .arg(&bt_file_dir.to_string_lossy().to_string())
@@ -171,21 +186,55 @@ async fn run(
                 .env("SHELL", "bash")
                 .stderr(stdio(verbose))
                 .stdout(stdio(verbose))
-                .output()
-                .expect("Failed to run BuildTools");
-            info!("Finished running BuildTools for {}", &package.id);
+                .status();
+
+            let res = match res {
+                Ok(status) => {
+                    if status.success() {
+                        info!("Successfully ran BuildTools for {}", &package.id);
+                        Ok(())
+                    } else {
+                        bail!(
+                            "Failed to run BuildTools for {}!{}",
+                            &package.id,
+                            if !verbose {
+                                " Run with --verbose for more info."
+                            } else {
+                                ""
+                            }
+                        )
+                    }
+                }
+                Err(ref err) => {
+                    bail!("Failed to run BuildTools for {}: {}", &package.id, err)
+                }
+            };
+
             // Will get removed later, doesn't matter if it fails.
-            fs::remove_dir_all(bt_dir).unwrap_or(());
-            info!("Cleaned up temp directory for {}", &package.id);
+            if fs::remove_dir_all(bt_dir).is_ok() {
+                info!("Cleaned up temp directory for {}", &package.id);
+            }
+
+            res
         }));
     }
-    future::join_all(handles).await;
+
+    let failed: Vec<_> = future::try_join_all(handles)
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|r| r.err())
+        .collect();
+    failed.iter().for_each(|e| error!("{}", e));
 
     info!("Cleaning up base temp directory");
     fs::remove_dir_all(bt_tmp_dir)?;
-    info!("Done!");
 
-    Ok(())
+    if !failed.is_empty() {
+        bail!("{} BuildTools instance(s) failed!", failed.len());
+    } else {
+        Ok(())
+    }
 }
 
 fn stdio(verbose: bool) -> Stdio {

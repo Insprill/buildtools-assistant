@@ -70,6 +70,17 @@ fn start() -> Result<()> {
         ColorChoice::Auto,
     )])?;
 
+    let args = Args::parse();
+
+    if args.versions.is_empty() {
+        bail!("You must specify at least one version to build!");
+    }
+
+    let bt_mem = args.bt_mem.unwrap_or(512);
+    if bt_mem < 512 {
+        bail!("BuildTools must have at least 512MB of memory per-instance!");
+    }
+
     let mut sys = System::new_with_specifics(
         RefreshKind::default()
             .with_memory(MemoryRefreshKind::new().with_ram())
@@ -78,29 +89,20 @@ fn start() -> Result<()> {
     sys.refresh_cpu();
     sys.refresh_memory();
 
-    let args = Args::parse();
     let worker_count = min(
         args.workers.unwrap_or_else(|| max(1, sys.cpus().len() / 4)),
         args.versions.len(),
     );
+
+    if ((bt_mem * worker_count) * 1_000_000) as u64 > sys.available_memory() {
+        bail!("You don't have enough memory to run {worker_count} BuildTools instances with {bt_mem}MB of memory! Please lower the worker count or memory available to each instance.");
+    }
 
     let runtime = Builder::new_multi_thread()
         .worker_threads(worker_count)
         .enable_time()
         .enable_io()
         .build()?;
-
-    let bt_mem = args.bt_mem.unwrap_or(512);
-
-    if bt_mem < 512 {
-        bail!("BuildTools must have at least 512MB of memory per-instance!");
-    }
-    if ((bt_mem * worker_count) * 1_000_000) as u64 > sys.available_memory() {
-        bail!("You don't have enough memory to run {worker_count} BuildTools instances with {bt_mem}MB of memory! Please lower the worker count or memory available to each instance.");
-    }
-    if args.versions.is_empty() {
-        bail!("You must specify at least one version to build!");
-    }
 
     runtime.block_on(run(&args.versions, bt_mem, args.output_dir, args.verbose))
 }

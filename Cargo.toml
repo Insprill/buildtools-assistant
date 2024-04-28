@@ -1,6 +1,6 @@
 [package]
 name = "buildtools-assistant"
-version = "1.1.1"
+version = "1.1.2"
 description = "A cross-platform CLI tool to easily run Spigot's BuildTools for one or more versions simultaneously, without the Java version mess."
 categories = ["command-line-utilities"]
 repository = "https://github.com/Insprill/buildtools-assistant"

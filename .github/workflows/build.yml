@@ -23,12 +23,7 @@ jobs:
             name: Windows
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Setup Toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
+        uses: actions/checkout@v4
 
       - name: Setup Cache
         uses: Swatinem/rust-cache@v2
@@ -37,7 +32,7 @@ jobs:
         run: cargo build --release
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: BuildTools-Assistant-${{ matrix.name }}
           path: target/release/buildtools-assistant${{ matrix.suffix }}
@@ -46,15 +41,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Setup Toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
+        uses: actions/checkout@v4
 
       - name: Setup Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Check Code Style
+      - name: Check rustfmt
+        run: cargo fmt --all -- --check
+
+      - name: Check Clippy
         run: cargo clippy -- -D warnings
+

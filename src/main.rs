@@ -176,7 +176,7 @@ async fn run(
             info!("Finished running BuildTools for {}", &package.id);
             // Will get removed later, doesn't matter if it fails.
             fs::remove_dir_all(bt_dir).unwrap_or(());
-            info!("Cleaned up temp direcotry for {}", &package.id);
+            info!("Cleaned up temp directory for {}", &package.id);
         }));
     }
     future::join_all(handles).await;

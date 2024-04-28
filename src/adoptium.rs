@@ -23,14 +23,9 @@ pub async fn get_releases() -> Result<Releases, reqwest::Error> {
 #[derive(Deserialize)]
 pub struct Releases {
     pub available_releases: Vec<u8>,
-    pub available_lts_releases: Vec<u8>,
 }
 
-pub async fn try_download_versions(
-    releases: &Releases,
-    versions: Vec<u8>,
-    path: &Path,
-) -> Result<()> {
+pub async fn try_download_versions(versions: Vec<u8>, path: &Path) -> Result<()> {
     for java_version in versions {
         let install_path = &path.join(java_version.to_string());
         if install_path.exists() && install_path.read_dir()?.next().is_some() {
@@ -38,21 +33,16 @@ pub async fn try_download_versions(
             continue;
         }
         info!("Downloading Java {:?}", java_version);
-        download_binaries(releases, java_version, &path.join(java_version.to_string())).await?;
+        download_binaries(java_version, &path.join(java_version.to_string())).await?;
     }
     Ok(())
 }
 
-async fn download_binaries(releases: &Releases, version: u8, path: &Path) -> Result<()> {
+async fn download_binaries(version: u8, path: &Path) -> Result<()> {
     let os = OS::current()?;
-    let image_type = if releases.available_lts_releases.contains(&version) {
-        "jre"
-    } else {
-        "jdk"
-    };
 
     let res = reqwest::get(&format!(
-        "https://api.adoptium.net/v3/binary/latest/{version}/ga/{}/{ARCH}/{image_type}/hotspot/normal/eclipse",
+        "https://api.adoptium.net/v3/binary/latest/{version}/ga/{}/{ARCH}/jdk/hotspot/normal/eclipse",
         os.adoptium_name()
     ))
     .await?

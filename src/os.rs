@@ -3,8 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::bail;
 use anyhow::Result;
+use anyhow::bail;
 
 #[derive(PartialEq, Eq)]
 pub enum OS {

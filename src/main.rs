@@ -7,16 +7,16 @@ use std::{
     process::{Command, Stdio},
 };
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::process::ExitCode;
 
 use futures::future;
 use itertools::Itertools;
-use log::{error, info, LevelFilter};
+use log::{LevelFilter, error, info};
 
-use clap::{command, Parser};
+use clap::{Parser, command};
 use platform_dirs::AppDirs;
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use rand::{Rng, distr::Alphanumeric, rng};
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
 use tokio::runtime::Builder;
@@ -81,13 +81,11 @@ fn start() -> Result<()> {
         bail!("BuildTools must have at least 512MB of memory per-instance!");
     }
 
-    let mut sys = System::new_with_specifics(
+    let sys = System::new_with_specifics(
         RefreshKind::default()
-            .with_memory(MemoryRefreshKind::new().with_ram())
-            .with_cpu(CpuRefreshKind::new()),
+            .with_memory(MemoryRefreshKind::everything())
+            .with_cpu(CpuRefreshKind::nothing()),
     );
-    sys.refresh_cpu();
-    sys.refresh_memory();
 
     let worker_count = min(
         args.workers.unwrap_or_else(|| max(1, sys.cpus().len() / 4)),
@@ -95,7 +93,9 @@ fn start() -> Result<()> {
     );
 
     if ((bt_mem * worker_count) * 1_000_000) as u64 > sys.available_memory() {
-        bail!("You don't have enough memory to run {worker_count} BuildTools instances with {bt_mem}MB of memory! Please lower the worker count or memory available to each instance.");
+        bail!(
+            "You don't have enough memory to run {worker_count} BuildTools instances with {bt_mem}MB of memory! Please lower the worker count or memory available to each instance."
+        );
     }
 
     let runtime = Builder::new_multi_thread()
@@ -153,7 +153,7 @@ async fn run(
     bt_file.set_len(0)?;
     bt_file.write_all(&buildtools_jar_data)?;
 
-    let rand: String = thread_rng()
+    let rand: String = rng()
         .sample_iter(&Alphanumeric)
         .take(12)
         .map(char::from)
@@ -178,7 +178,7 @@ async fn run(
             let res = Command::new(install_dir.to_string_lossy().to_string())
                 .arg(format!("-Xmx{bt_mem}m"))
                 .arg("-jar")
-                .arg(&bt_file_dir.to_string_lossy().to_string())
+                .arg(bt_file_dir.to_string_lossy().to_string())
                 .arg("--rev")
                 .arg(&package.id)
                 .arg("--output-dir")

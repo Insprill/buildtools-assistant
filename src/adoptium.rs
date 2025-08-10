@@ -10,6 +10,7 @@ use log::info;
 use serde::Deserialize;
 use std::env::consts::ARCH;
 use tar::Archive;
+use zip::ZipArchive;
 
 use crate::os::OS;
 
@@ -54,7 +55,7 @@ async fn download_binaries(version: u8, path: &Path) -> Result<()> {
 
     info!("Extracting Java {version:?}");
     if os == OS::WINDOWS {
-        zip_extract::extract(Cursor::new(bytes), path, false)?;
+        ZipArchive::new(Cursor::new(bytes))?.extract(path)?;
     } else {
         Archive::new(GzDecoder::new(bytes)).unpack(path)?;
     };

@@ -2,6 +2,7 @@ use anyhow::{Result, bail};
 use futures::future;
 use itertools::Itertools;
 use log::info;
+use semver::Version;
 use serde::Deserialize;
 
 async fn fetch_version_manifest() -> Result<VersionManifest, reqwest::Error> {
@@ -41,12 +42,15 @@ pub struct JavaVersion {
     pub major_version: u8,
 }
 
-pub async fn map_version_manifests(versions: &[String]) -> Result<Vec<Manifest>> {
+pub async fn map_version_manifests(versions: &[Version]) -> Result<Vec<Manifest>> {
     let mut manifests = Vec::with_capacity(versions.len());
 
     let version_manifest = fetch_version_manifest().await?;
     for version in versions.iter().unique() {
-        let manifest = version_manifest.versions.iter().find(|v| &v.id == version);
+        let manifest = version_manifest
+            .versions
+            .iter()
+            .find(|v| v.id == version.to_string().trim_end_matches(".0"));
         if let Some(m) = manifest {
             manifests.push(m.clone());
         } else {

@@ -8,6 +8,7 @@ use std::{
 };
 
 use anyhow::{Result, bail};
+use semver::{Version, VersionReq};
 use std::process::ExitCode;
 
 use futures::future;
@@ -25,6 +26,8 @@ pub mod adoptium;
 pub mod mojang;
 pub mod os;
 pub mod spigot;
+
+const USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -108,18 +111,37 @@ fn start() -> Result<()> {
 }
 
 async fn run(
-    versions: &[String],
+    requested_versions: &[String],
     bt_mem: usize,
     output_dir: Option<PathBuf>,
     verbose: bool,
 ) -> Result<()> {
-    let manifests = mojang::map_version_manifests(versions).await?;
+    let all_versions = spigot::fetch_all_versions().await?;
 
-    if let Some(invalid_ver) = spigot::versions_exist(versions).await? {
-        bail!("BuildTools doesn't support version {invalid_ver}!");
-    }
+    let requested_versions: Vec<VersionReq> = requested_versions
+        .iter()
+        .map(|v_req| if v_req.starts_with('1') { format!("={v_req}") } else { v_req.to_owned() })
+        .map(|v_req| VersionReq::parse(&v_req))
+        .collect::<Result<_, _>>()?;
 
-    let packages = mojang::fetch_packages(manifests.clone()).await?;
+    let selected_versions: Vec<Version> = all_versions
+        .into_iter()
+        .filter(|v| requested_versions.iter().any(|v_req| v_req.matches(v)))
+        .collect();
+
+    info!(
+        "Building verions: {:?}",
+        selected_versions
+            .iter()
+            .sorted_by(|a, b| b.cmp_precedence(a)) // List from newest to oldest
+            .map(|v| v.to_string())
+            .collect::<Vec<_>>()
+    );
+
+    let all_manifests = mojang::map_version_manifests(&selected_versions).await?;
+    let packages = mojang::fetch_packages(all_manifests.clone()).await?;
+
+    return Ok(());
 
     let java_versions: Vec<u8> = packages
         .iter()
